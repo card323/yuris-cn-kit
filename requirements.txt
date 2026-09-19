@@ -1,0 +1,8 @@
+# Dependencies of the YU-RIS Chinese localisation kit.
+# Everything else in this folder is standard library only.
+#
+#   pip install -r requirements.txt
+#
+Pillow        # preview_yuris_font.py, preview_text_spacing.py, preview_glow_weights.py
+fontTools     # install_glow_sans.py, preview_glow_weights.py (rewriting the OTF name table)
+murmurhash2   # ypf_tool.py (the two 32-bit hash fields of every .ypf v500 entry)

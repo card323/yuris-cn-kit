@@ -1,0 +1,21 @@
+# cat	orig	reading	cn	note	count
+# YU-RIS 汉化术语表 —— 模板，请换成你自己游戏的术语。
+#
+# 列：
+#   cat      分类：name / place / org / skill / deity / item / term / gikun / register / h / other
+#            name=人名  place=地名  org=组织  skill=招式/术  term=专有名词  h=H 场景用语
+#            gikun=作者自造读音  register=语体/敬语  other=其它
+#   orig     日文原文（剧本里逐字出现的形式，用于拼写一致性检查）
+#   reading  作者在剧本里标的假名读音（ルビ）。空 = 原文没有标注
+#   cn       约定的中文译名（**译者必须按这一列写**）
+#   note     备注：为什么这么译、避免哪些写法
+#   count    该词在剧本里出现的次数（extract_terms.py 会填，方便优先做高频词）
+#
+# 用法：
+#   python extract_terms.py                               # 从抽取结果挖候选词 → glossary\candidates_*.tsv
+#   python check_glossary.py --lines workpack\lines.tsv   # 用本表检查拼写一致性
+#
+# 下面三行是**格式示例**，请删掉后填自己的：
+term	瘴気		瘴气	游戏里指从地脉渗出的污染	0
+name	サンプル		示例	人物名，全篇统一用这两个字	0
+place	サンプル町		示例镇	地名，不带「市/镇」后缀	0

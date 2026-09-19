@@ -1,0 +1,24 @@
+# --- third party, clone it yourself, never commit it here -----------------
+yuris_decompiler/
+
+# --- your game data and your game's build products ------------------------
+build/
+yuris_text_out/
+workpack/
+translation/
+_tmp/
+*.ypf
+*.ybn
+*.yst
+
+# --- fonts: the OFT you borrow is not ours to redistribute here ------------
+glow_sans*.otf
+GlowSans*.otf
+
+# --- tool noise ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+preview_*.png
+*.bak
