@@ -6,6 +6,7 @@ build/
 yuris_text_out/
 workpack/
 translation/
+release/
 _tmp/
 *.ypf
 *.ybn

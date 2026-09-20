@@ -47,6 +47,7 @@ from __future__ import annotations
 import argparse
 import struct
 import sys
+import tempfile
 import zlib
 from pathlib import Path
 
@@ -119,6 +120,46 @@ def read_ypf(src: Path | bytes, *, names: bool = True,
     content and ``blob`` the exact bytes stored in the file.
     """
     buf = src if isinstance(src, bytes) else Path(src).read_bytes()
+    ver, nent, lhdr = _parse_header(buf)
+    table, off = _parse_table(buf, ver, nent, check, names)
+
+    entries = []
+    for i, e in enumerate(table):
+        blob = bytes(buf[e['off']:e['off'] + e['cl']])
+        if len(blob) != e['cl']:
+            raise ValueError(f'entry {i}: stored blob runs past the end of the file')
+        if check and mmh2(blob) != e['hash']:
+            raise ValueError(f'entry {i}: file hash mismatch '
+                             f'(stored {e["hash"]:08X}, computed {mmh2(blob):08X})')
+        if e['comp']:
+            raw = zlib.decompress(blob)
+            if check and len(raw) != e['ul']:
+                raise ValueError(f'entry {i}: unpacked size {len(raw)}, header says {e["ul"]}')
+        else:
+            raw = blob
+        entries.append({'name': e['name'], 'raw': raw, 'blob': blob,
+                        'comp': e['comp'], 'ul': len(raw), 'off': e['off']})
+    _check_table_end(off, ver, lhdr)
+    return ver, entries
+
+
+def scan_ypf(src: Path) -> tuple[int, list[str]]:
+    """Return ``(version, names)`` reading the entry table only.
+
+    ``pac`` folders hold multi-gigabyte archives (``cg.ypf`` is 2.2 GB here), so
+    looking for one entry by name must not read - or decompress - any payload.
+    """
+    with open(src, 'rb') as fh:
+        head = fh.read(32)
+        ver, nent, lhdr = _parse_header(head)
+        fh.seek(32)
+        buf = head + fh.read(max(0, lhdr - 32))
+    table, off = _parse_table(buf, ver, nent, True, True)
+    _check_table_end(off, ver, lhdr)
+    return ver, [e['name'] for e in table]
+
+
+def _parse_header(buf: bytes) -> tuple[int, int, int]:
     if len(buf) < 32:
         raise ValueError('file is too short to be a ypf archive')
     magic, ver, nent, lhdr = struct.unpack_from('<4I', buf, 0)
@@ -126,12 +167,17 @@ def read_ypf(src: Path | bytes, *, names: bool = True,
         raise ValueError(f'bad magic {magic:08X}, expected {MAGIC:08X}')
     if any(buf[16:32]):
         raise ValueError('the 16 header padding bytes are not zero')
-    nl_trans, nb_trans, ent_fmt, ent_size = table_layout(ver)
     if not (200 <= ver < 501):
         raise ValueError(f'unsupported ypf version {ver}')
+    return ver, nent, lhdr
 
+
+def _parse_table(buf: bytes, ver: int, nent: int, check: bool,
+                 names: bool) -> tuple[list[dict], int]:
+    """Parse the entry table; the stored blobs are left alone."""
+    nl_trans, nb_trans, ent_fmt, ent_size = table_layout(ver)
     off = 32
-    entries = []
+    table = []
     for i in range(nent):
         if off + 5 > len(buf):
             raise ValueError(f'entry {i}: truncated name header')
@@ -150,31 +196,17 @@ def read_ypf(src: Path | bytes, *, names: bool = True,
             raise ValueError(f'entry {i}: truncated entry record')
         kind, comp, ul, cl, offset, fhash = struct.unpack_from(ent_fmt, buf, off)
         off += ent_size
-        blob = bytes(buf[offset:offset + cl])
-        if len(blob) != cl:
-            raise ValueError(f'entry {i}: stored blob runs past the end of the file')
-        if check and mmh2(blob) != fhash:
-            raise ValueError(f'entry {i}: file hash mismatch '
-                             f'(stored {fhash:08X}, computed {mmh2(blob):08X})')
-        if comp:
-            raw = zlib.decompress(blob)
-            if check and len(raw) != ul:
-                raise ValueError(f'entry {i}: unpacked size {len(raw)}, header says {ul}')
-        else:
-            raw = blob
-        entries.append({
-            'name': name_bytes.decode(NAME_ENCODING) if names else name_bytes.decode(
-                NAME_ENCODING, 'replace'),
-            'raw': raw,
-            'blob': blob,
-            'comp': comp,
-            'ul': len(raw),
-            'off': offset,
-        })
+        table.append({'name': name_bytes.decode(NAME_ENCODING) if names else
+                      name_bytes.decode(NAME_ENCODING, 'replace'),
+                      'comp': comp, 'ul': ul, 'cl': cl, 'off': offset,
+                      'hash': fhash})
+    return table, off
+
+
+def _check_table_end(off: int, ver: int, lhdr: int) -> None:
     want = data_start(ver, lhdr)
     if off != want:
         raise ValueError(f'entry table ends at {off}, header says {want}')
-    return ver, entries
 
 
 # --------------------------------------------------------------------------- #
@@ -419,6 +451,18 @@ def cmd_selftest(args) -> int:
         match = mmh2(probe) == ff.mmh2(probe, 0) or ff.mmh2(probe, 0) is False
         ok &= match
     print(f'  mmh2         {"match" if ok else "MISMATCH"}')
+
+    # scan_ypf (table only) must name every entry read_ypf finds
+    with tempfile.TemporaryDirectory(prefix='ypf-selftest-') as temp:
+        probe = Path(temp) / 'probe.ypf'
+        probe.write_bytes(build([{'name': 'ysbin\\a.ybn', 'raw': b'hello' * 40},
+                                 {'name': 'ysbin\\b.ybn', 'raw': b'x'}],
+                                500, dedup=False, level=9))
+        ver_a, entries = read_ypf(probe)
+        ver_b, names = scan_ypf(probe)
+        match = ver_a == ver_b == 500 and names == [e['name'] for e in entries]
+        ok &= match
+        print(f'  scan_ypf     {"match" if match else "MISMATCH"}')
     print('selftest:', 'OK' if ok else 'FAILED')
     return 0 if ok else 1
 

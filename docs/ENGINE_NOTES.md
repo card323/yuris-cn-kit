@@ -196,7 +196,7 @@ C6 43 17 86 90 90 90     mov byte ptr [ebx+0x17],0x86 ; GB2312_CHARSET
 * 名字走的是 `CreateFontA`，即用**进程 ANSI 代码页（932）**解码，所以必须写字体注册的 **ASCII 名**（`SimSun`、`MS Gothic`），别写本地化名。
 * 这张表是引擎的**默认面**：脚本没显式指定的部分（菜单、设置、消息窗等）用它。对白/选项/N 名牌是脚本通过 `FONT[NAME=…]` / `TD.FONT.SET` 指定的 —— 这正是我们改字体时要动**脚本文面量**（`transcode_yuris_scripts.py --face`）的原因。
 
-`--fonts` 三个可选值：`--fonts shipped`（还原原版日文字体）、`--fonts "Microsoft YaHei,SimHei,SimSun"`（推荐，缺字兜底链）。
+`--fonts` 三个可选值：`--fonts shipped`（还原原版日文字体）、`--fonts "Glow Sans SC,Microsoft YaHei,SimHei"`（发行包用的，槽 0 走 OFL 字体）、`--fonts "Microsoft YaHei,SimHei,SimSun"`（默认，不依赖外部字体）。
 
 **找法**：在 `_RDATA` 里找成组的短字符串（长度都 < 16），其地址被三个相邻 immediate 压栈，附近有 `EnumFontFamiliesExA` 的 IAT 引用。
 

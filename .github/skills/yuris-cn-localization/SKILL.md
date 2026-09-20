@@ -33,12 +33,17 @@ Full detail lives in [`docs/`](../../../docs/):
 | [ENCODING_AND_FONT.md](../../../docs/ENCODING_AND_FONT.md) | changing font, weight, size, spacing, or encoding |
 | [TROUBLESHOOTING.md](../../../docs/TROUBLESHOOTING.md) | the game crashes, looks wrong, or a check fails |
 | [ALTERNATIVES.md](../../../docs/ALTERNATIVES.md) | someone asks how other groups do YU-RIS, or whether an off-the-shelf tool would be quicker |
+| [PACKAGING.md](../../../docs/PACKAGING.md) | assembling, smoke-testing or publishing the installer release (form A2) |
 | [NOTICE.md](../../../NOTICE.md) | before publishing anything |
 
 ## Invariants — never violate these
 
 1. **Never publish the translations.** They belong to the translator. Do not
-   paste more than a few sample lines into any file, PR, issue or chat.
+   paste more than a few sample lines into any file, PR, issue or chat. The one
+   intended exception is the installer release the translator ships themselves:
+   its `payload/workpack/lines.tsv` is the rebuild input (see
+   [PACKAGING.md](../../../docs/PACKAGING.md) §3), and it is only distributed
+   with the translator's consent.
 2. **Never redistribute game assets**: no original `.ypf`, no patched `.exe`,
    no extracted scripts. A published patch is a *patcher* + the user's own
    generated `update1.ypf`. See [NOTICE.md](../../../NOTICE.md) §4.
@@ -104,7 +109,10 @@ python test_control_check.py
 
 # 5. PATCH THE EXECUTABLE (dry run first; writes <exe>.orig)
 python patch_yuris_charset.py --exe D:\game\game.exe                       # report
-python patch_yuris_charset.py --exe D:\game\game.exe --apply --fonts "Microsoft YaHei,SimHei,SimSun"
+python patch_yuris_charset.py --exe D:\game\game.exe --apply --fonts "Glow Sans SC,Microsoft YaHei,SimHei"
+#    Slot 0 is the dialogue face.  Use the default "Microsoft YaHei,SimHei,SimSun"
+#    when you are NOT installing Glow Sans (step 6); then keep the two in sync -
+#    a face name that is not installed is silently swapped for SimSun.
 
 # 6. OPTIONAL FONT: register a face name that fits the 13-byte script literal
 python install_glow_sans.py --weight light --bold-weight light
@@ -117,7 +125,17 @@ python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --insta
 
 # 8. RE-CHECK AT ANY TIME
 python verify_cn_pack.py build D:\ysbin
+
+# 9. SHIP IT (optional): assemble the A2 installer release - the payload carries
+#    the translation + tools + OFL font, NOT any game file; the installer rebuilds
+#    update1.ypf from the user's own pac\bn.ypf and refuses unless the result is
+#    byte-identical to what was released.
+python make_patcher.py --zip --force --game D:\game
 ```
+
+Then smoke-test the release in a throwaway game folder before publishing:
+[PACKAGING.md](../../../docs/PACKAGING.md) §7 (`--dry-run` → install → `--status` → `--uninstall`
+→ byte-compare against the snapshot).
 
 ## Gates — what must be true before shipping
 
@@ -128,6 +146,7 @@ python verify_cn_pack.py build D:\ysbin
 | Control bytes | `test_control_check.py` | all pass |
 | Pack level | `verify_cn_pack.py build D:\ysbin` | `PASS: … is safe to install` (8 checks) |
 | Installed twice | compare SHA-256 of `build\update1.ypf` with `<game>\update1.ypf` and `<game>\pac\update1.ypf` | identical |
+| Release smoke test | `install_cn_patch.exe --game <scratch> --dry-run`, then install → `--status` → `--uninstall` in a throwaway game folder | rebuild equals `manifest.build.expected_sha256`; folder byte-identical afterwards ([PACKAGING.md](../../../docs/PACKAGING.md) §7) |
 
 The eight pack checks and what a FAIL means:
 [PIPELINE.md](../../../docs/PIPELINE.md) §3, [TROUBLESHOOTING.md](../../../docs/TROUBLESHOOTING.md) §7.
@@ -155,7 +174,7 @@ Do not hard-code anything. Re-derive, in this order:
 4. the face-name literal and its byte length; the text-definition names `M`/`NAME`;
 5. the renderer's letter/line-spacing fields.
 
-Then run steps 1–8 above. If the scripts have no `YSTB` magic, the title is not
+Then run steps 1–8 above (step 9 to package a release). If the scripts have no `YSTB` magic, the title is not
 this engine generation and the kit does not apply.
 
 Before starting, read [ALTERNATIVES.md](../../../docs/ALTERNATIVES.md): if the

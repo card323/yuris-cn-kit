@@ -97,6 +97,23 @@ SLOTS: tuple[tuple[str, int, bool], ...] = (
     ("GlowSansSC-CN-Bold.otf", 700, True),
 )
 
+#: Set by a frozen caller (``install_cn_patch.py``): it cannot re-run *this* file
+#: to verify GDI in a fresh process, so it points this at itself instead (see its
+#: ``--internal-font-verify`` flag).  ``None`` = run this file with sys.executable.
+RESPAWN_ARGV: list[str] | None = None
+
+
+def _verify_argv(family: str, same_weight: bool, corpus: str | None = None) -> list[str]:
+    tail = ["--verify", "--family", family]
+    if same_weight:
+        tail.append("--same-weight")
+    if corpus:
+        tail += ["--corpus", corpus]
+    if RESPAWN_ARGV is not None:
+        return list(RESPAWN_ARGV) + tail
+    return [sys.executable, os.path.abspath(__file__)] + tail
+
+
 gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
@@ -281,7 +298,8 @@ def broadcast_font_change() -> None:
                                SMTO_ABORTIFHUNG, 2000, ctypes.byref(res))
 
 
-def verify(family: str, same_weight: bool = False) -> int:
+def verify(family: str, same_weight: bool = False,
+           corpus: str | None = None) -> int:
     """Prove GDI hands out this family at both weights, from a clean process.
 
     ``same_weight`` marks an install that deliberately put the same Glow weight
@@ -326,7 +344,7 @@ def verify(family: str, same_weight: bool = False) -> int:
           f"{''.join(missing) if missing else 'none'}")
     ok &= not missing
 
-    corpus = os.path.join(ROOT, "workpack", "lines.tsv")
+    corpus = corpus or os.path.join(ROOT, "workpack", "lines.tsv")
     if os.path.exists(corpus):
         chars = set()
         for orig, new in pv.load_lines(corpus):
@@ -355,6 +373,12 @@ def main(argv: list[str] | None = None) -> int:
                          "must be at most 12 bytes for the 13-byte script literal)")
     ap.add_argument("--font-dir", default=FONT_DIR,
                     help="folder holding the installed Glow Sans files")
+    ap.add_argument("--build-dir", default=BUILD_DIR,
+                    help="where the renamed copies are written before installing "
+                         f"(default: {BUILD_DIR})")
+    ap.add_argument("--corpus", default=os.path.join(ROOT, "workpack", "lines.tsv"),
+                    help="lines.tsv whose every character has to render, checked by "
+                         "--verify (missing file = skip that check)")
     ap.add_argument("--line-metrics", default=LINE_METRICS_DEFAULT,
                     metavar="typo|keep|ASC/DESC",
                     help="vertical metrics for the installed copy.  GDI scales "
@@ -383,7 +407,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.verify:
         print(f"verifying {args.family!r}")
-        return verify(args.family, same_weight=args.same_weight)
+        return verify(args.family, same_weight=args.same_weight,
+                      corpus=args.corpus)
 
     weight = WEIGHTS[args.weight.lower()]
     bold_weight = WEIGHTS[args.bold_weight.lower()]
@@ -411,7 +436,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for (name, _w, bold), src in zip(SLOTS, srcs):
         full = f"{args.family} Bold" if bold else args.family
-        dst = os.path.join(BUILD_DIR, name)
+        dst = os.path.join(args.build_dir, name)
         ps = rename_font(src, dst, args.family, "Bold" if bold else "Regular",
                          _w, bold, line_metrics=args.line_metrics)
         print(f"    renamed -> {dst}  (PostScript {ps}, full name {full!r})")
@@ -428,9 +453,8 @@ def main(argv: list[str] | None = None) -> int:
 
     broadcast_font_change()
     print("verifying in a fresh process ...")
-    rc = subprocess.call([sys.executable, os.path.abspath(__file__), "--verify",
-                          "--family", args.family]
-                         + (["--same-weight"] if weight == bold_weight else []),
+    rc = subprocess.call(_verify_argv(args.family, weight == bold_weight,
+                                     args.corpus),
                          env={**os.environ, "PYTHONIOENCODING": "utf-8"})
     if rc:
         print("verification FAILED - the game would still fall back to another face")

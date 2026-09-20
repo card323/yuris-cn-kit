@@ -133,7 +133,7 @@ python check_glossary.py --lines workpack\lines.tsv --strict      # 警告也算
 
 ```powershell
 python patch_yuris_charset.py --exe "D:\Games\XXX\oujunoshima.exe"                    # dry run（默认）
-python patch_yuris_charset.py --exe "D:\Games\XXX\oujunoshima.exe" --apply --fonts "Microsoft YaHei,SimHei,SimSun"
+python patch_yuris_charset.py --exe "D:\Games\XXX\oujunoshima.exe" --apply --fonts "Glow Sans SC,Microsoft YaHei,SimHei"
 python patch_yuris_charset.py --exe "D:\Games\XXX\oujunoshima.exe" --revert           # 从 .orig 还原
 ```
 
@@ -142,9 +142,10 @@ python patch_yuris_charset.py --exe "D:\Games\XXX\oujunoshima.exe" --revert     
 | 改什么 | 作用 |
 | --- | --- |
 | `lfCharSet` → `0x86`（GB2312） | 让 GDI 用代码页 936 解码我们塞进去的 GBK 字节 |
-| 默认字体表 3 个槽位（`Microsoft YaHei,SimHei,SimSun`） | 脚本没指定字体时的兜底链；缺字时 GDI 才不会去挑日文字体 |
+| 默认字体表 3 个槽位（默认 `Microsoft YaHei,SimHei,SimSun`） | 脚本没指定字体时的兜底链；缺字时 GDI 才不会去挑日文字体 |
 | DBCS 前导字节表（0x81–0xFE） | 引擎自己算「这个字符几字节」时用的表，原版是 SJIS 的 0x81–0xFC |
 
+* **槽 0 是对白字体**（脚本里的字体名字面量最终指向它）。不装 Glow Sans 时用上面的默认链；装了 Glow Sans（§2.7）就用 `--fonts "Glow Sans SC,Microsoft YaHei,SimHei"`——**本仓库的发行包用的就是这条**（`make_patcher.py` 的 `EXE_FONTS`，见 [PACKAGING.md](PACKAGING.md) §4），因为 `Glow Sans SC` 必须在系统里真实存在（否则 GDI 静默换成宋体，见 [ENCODING_AND_FONT.md](ENCODING_AND_FONT.md) §4.3）。
 * 不给 `--exe` 会自动扫本目录找 `oujunoshima.exe`；游戏 exe 叫别的名字时用 `--exe-name 别的名字.exe`。
 * 打补丁前会**先备份 `<exe>.orig`**，`--revert` 用它还原，所以这一步是可逆的。
 * 换游戏要重新推导这三个 VA——见 §9。
@@ -333,6 +334,8 @@ python test_control_check.py
 | `patch_yuris_charset.py` | exe 三处补丁（字符集/字体表/前导表） | 默认 dry run，`--revert` 可还原 |
 | `install_glow_sans.py` | 改名安装 Glow Sans 两个字重并注册家族名 | OFL 条款见 NOTICE |
 | `tune_dialogue.py` | 一条命令调字体/字号/字重/字距 | 状态记录 + 自动跳过 |
+| `install_cn_patch.py` | **用户侧安装器**：用自己的游戏现场重建 + 安装 + 卸载 + 状态 | 行为由 `payload\manifest.json` 驱动，见 [PACKAGING.md](PACKAGING.md) |
+| `make_patcher.py` | **发行包装配器**：铺 payload → 参考重建 → 算 exe 哈希 → 写 manifest → 包装脚本 → 冻结 exe | 见 [PACKAGING.md](PACKAGING.md) §6 |
 | `preview_yuris_font.py` | 用引擎的 GDI 路径渲染对白预览 PNG | 调参不用开游戏 |
 | `preview_text_spacing.py` | 字距/行距预览 | 同上 |
 | `preview_glow_weights.py` | 同一段文字的各字重对照 | 选字重用 |
@@ -357,11 +360,12 @@ python test_control_check.py
 | 字距/行距字段 | `--char-space`/`--line-space` | `userdefine\メイン定義.txt` 里两个 `gInt1144(36,19/20)` |
 | 扫描/替换用的字体、宽度预算 | `docs/TRANSLATION_RULES.md` §5 | 按新字号重算 |
 
-**发布补丁器（合规做法）**：不要分发打过补丁的 exe，也不要分发解包出来的原始资源。写一个脚本让用户指向**自己那份游戏目录**，然后依次调用：
+**发布补丁器（合规做法）**：不要分发打过补丁的 exe，也不要分发解包出来的原始资源。本仓库做好的发行包装配器就是干这个的：
 
 ```powershell
-python patch_yuris_charset.py --exe "<用户游戏>\oujunoshima.exe" --apply --fonts "Microsoft YaHei,SimHei,SimSun"
-python build_cn_pack.py --workpack workpack --indir <用户解包目录> --install --install-dir "<用户游戏>"
+python make_patcher.py --zip --force --game "D:\...\鏖呪ノ嶼"
 ```
 
-`update1.ypf` 本身是「修改过的游戏资源」，分发边界与免责声明见 [NOTICE.md](../NOTICE.md) §4。
+它产出 `release\yuris-cn-patch-<版本>-win64\`——一个「让用户指向自己那份游戏、在用户机器上重建并安装」的补丁器（形态 A2：包里没有游戏资源文件，`manifest.json` 把重建结果哈希钉死）。
+模型对比、`manifest.json` 逐字段说明、发布前自检配方、杀软误报处理、发布渠道：见 **[PACKAGING.md](PACKAGING.md)**。
+`update1.ypf` 本身属于「修改过的游戏资源」，分发边界与免责声明见 [NOTICE.md](../NOTICE.md) §4。

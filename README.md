@@ -104,7 +104,7 @@ python check_glossary.py --lines workpack\lines.tsv          # 逐行查
 python check_glossary.py --lines workpack\lines.tsv --strict # 宽度超限也当错误
 
 # 5) 引擎改造（一次）：exe 三处补丁（默认 dry run，看清楚再 --apply）
-python patch_yuris_charset.py --exe "D:\Games\...\oujunoshima.exe" --apply --fonts "Microsoft YaHei,SimHei,SimSun"
+python patch_yuris_charset.py --exe "D:\Games\...\oujunoshima.exe" --apply --fonts "Glow Sans SC,Microsoft YaHei,SimHei"
 
 # 6) 构建：引擎脚本转码 + 注入译文 + 打包 + 8 项校验 + 安装
 #    --face="" = 引擎脚本里的字体名不动（仍用原版 ＭＳ ゴシック，System32 里就有；
@@ -113,9 +113,14 @@ python build_cn_pack.py --workpack workpack --indir D:\ysbin --face="" --install
 
 # 7) 可选：换 Glow Sans 并调字号/字重/字距（一条命令，自动跳过没变的步骤）
 python tune_dialogue.py --size "M=30x32, NAME=30x32" --weight light --bold-weight light --game "D:\Games\..."
+
+# 8) 打包成「补丁器」发行包（形态 A2：用户自己那份游戏现场重建，包内不含游戏数据）
+#    产出 release\yuris-cn-patch-1.0.0-win64\（含冻结的 install_cn_patch.exe）+ .zip
+python make_patcher.py --zip --force --game "D:\Games\..."
 ```
 
-详细的每一步（参数含义、产物、耗时、失败怎么办）见 **[docs/PIPELINE.md](docs/PIPELINE.md)**。
+详细的每一步（参数含义、产物、耗时、失败怎么办）见 **[docs/PIPELINE.md](docs/PIPELINE.md)**；
+发布与合规见 **[docs/PACKAGING.md](docs/PACKAGING.md)**。
 
 ---
 
@@ -124,6 +129,7 @@ python tune_dialogue.py --size "M=30x32, NAME=30x32" --weight light --bold-weigh
 | 文档 | 内容 | 谁看 |
 | --- | --- | --- |
 | [docs/PIPELINE.md](docs/PIPELINE.md) | **操作手册**：从解包到安装的每一步、参数、产物、校验门、工具一览 | 执行汉化的人 |
+| [docs/PACKAGING.md](docs/PACKAGING.md) | **打包与发布**：A1/A2 两种发布形态、`manifest.json` 逐字段、发行包自检配方、杀软误报、发布渠道 | 要发布补丁的人 |
 | [docs/TRANSLATION_RULES.md](docs/TRANSLATION_RULES.md) | **翻译硬约束**（模板）：前缀、ruby、禁写字符、宽度预算、自检命令 | 译者 |
 | [docs/ENGINE_NOTES.md](docs/ENGINE_NOTES.md) | 引擎逆向笔记：YPF/YSTB/YSL/YSCM 格式、清单与行号、密钥恢复、exe 里 5 处 CP932 假设**以及怎么为别的构建重新定位** | 想移植/排错的人 |
 | [docs/ENCODING_AND_FONT.md](docs/ENCODING_AND_FONT.md) | 编码/字符集/字体三者的关系，为什么必须是 GBK，字体许可与降级链 | 想换字体/编码的人 |
@@ -161,9 +167,14 @@ yuris-cn-kit\
   .github\skills\      agent 技能
   glossary\glossary.tsv  术语表模板（自填，check_glossary.py 读它）
   glossary\STYLE_GUIDE.md 风格指南：工具报错引用的章节号契约
-  *.py                 22 个命令行工具（见 docs/PIPELINE.md §8 工具一览）
+  *.py                 24 个命令行工具（见 docs/PIPELINE.md §8 工具一览）
+  packaging\           发行包的包装脚本模板（安装汉化.bat / 卸载汉化.bat / 说明.txt）
+  licenses\            Glow Sans OFL 与 yurislib MIT 的许可全文（随发行包分发）
+  make_patcher.py      装配 release\yuris-cn-patch-<版本>-win64\（见 docs/PACKAGING.md）
+  install_cn_patch.py  用户侧安装器：用自己的游戏现场重建 + 安装 + 卸载（A2）
   yuris_decompiler\    （自备，clone 出来，不在本仓库里）
   workpack\ build\     运行时生成的中间产物（已 .gitignore）
+  release\             发行包产物（已 .gitignore，走 GitHub Releases）
 ```
 
 运行时的默认路径都在**当前目录**下：`--indir` 默认 `D:\ysbin`（实测用的解包目录，**换机器请显式传**），`--repo` 默认 `.\yuris_decompiler`，其它产物默认落在 `build\`。
