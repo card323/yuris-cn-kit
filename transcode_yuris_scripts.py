@@ -176,7 +176,9 @@ Usage::
         --char-space -6
 
 ``build_cn_pack.py`` runs this automatically between the injection and the
-packing step, so the shipped ``update1.ypf`` replaces the whole script set.
+packing step.  Only scripts that really changed are written out, so the shipped
+``update1.ypf`` is an *overlay*: whatever it does not carry is still read from
+the game's own ``pac\bn.ypf``.
 """
 
 from __future__ import annotations

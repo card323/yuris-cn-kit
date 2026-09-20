@@ -67,7 +67,9 @@ git clone https://github.com/shimamura-sakura/yuris_decompiler.git   # MIT, runt
 ```
 
 `yuris_decompiler/` must sit **next to** the tools (the kit `.gitignore` keeps it
-out of the published repo). Unpack the game's script archive once:
+out of the published repo). Unpack the game's script archive once — the input is
+the archive the **game itself ships** (the one holding `ysc.ybn`); `update1.ypf`
+is *our* output, so a stock install has no such file:
 
 ```powershell
 python ypf_tool.py list pac\bn.ypf                  # which archive holds ysc.ybn?
@@ -109,7 +111,7 @@ python install_glow_sans.py --weight light --bold-weight light
 python install_glow_sans.py --verify
 
 # 7. BUILD + VERIFY + INSTALL   (inject -> engine transcode -> pack -> 8 checks)
-python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install
+python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install --install-dir D:\game
 #    Installs to <game>\update1.ypf AND <game>\pac\update1.ypf.
 #    A pack the game cannot read is worse than no pack: never skip --install's verify.
 

@@ -13,9 +13,8 @@
 ```
 安装目录\
   ojunoshima.exe        引擎（PE32 x86，无壳）
-  pac\bn.ypf            脚本包（本作的名字；别的作品可能叫 script.ypf 等）
-  pac\data.ypf          图片/语音包
-  pac\bgm.ypf 等
+  pac\bn.ypf            脚本包，2 705 819 字节 / 234 个条目（本作的名字；别的作品可能叫 script.ypf 等）
+  pac\cg.ypf 等 10 个   图片/语音/BGM/影片包（cg 2.2 GB、vo/vof 各 300–450 MB、sn 101 MB…），工具链不碰
   update1.ypf …         ★ 引擎优先读这些（根目录和 pac\ 都找），原版不带 → 我们的落点
 ```
 

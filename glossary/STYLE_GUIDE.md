@@ -176,7 +176,7 @@ python fix_name_plates.py --translation-dir translation\userscript --apply
 python tune_dialogue.py --size "M=30x32, NAME=30x32"
 
 # 6) 构建（自带八项校验 → 打包 → 安装到游戏目录两处）
-python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install
+python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install --install-dir "<游戏目录>"
 ```
 
 **9.0 构建自带的八项检查**（`verify_cn_pack.py`，任何一项 FAIL 都**不要**安装）：

@@ -30,7 +30,7 @@
 * **不能扩长字符串后再改偏移**——整套偏移表（命令块/参数块/表达式块/行号块）都得重算，本工具链刻意不碰。
 * **不能做中文名牌**（角色名想在名牌上显示中文）——那需要往编译脚本里**新增 `GOSUB` 记录**，本工具链做不到；默认方案是名牌保留日文原名（见 [docs/TRANSLATION_RULES.md](docs/TRANSLATION_RULES.md) §2）。
 * **不改图片**。菜单、按钮上的文字是图片，改它们属于另一条工作线。
-* **不发游戏本体**。要发布补丁，只能发「补丁器 + 你自己生成的 `update1.ypf`」，绝不要发打补丁后的 exe（见 [NOTICE.md](NOTICE.md)）。
+* **不发游戏本体**。推荐的发布形态是**只发「补丁器」**——让用户指向自己装的游戏，脚本读他本机的 `pac\bn.ypf` 现场生成包。`update1.ypf` 本身是否连带分发属于灰色地带；**绝不要**发打补丁后的 exe（见 [NOTICE.md](NOTICE.md) §4）。
 
 ---
 
@@ -82,8 +82,9 @@ git clone https://github.com/shimamura-sakura/yuris_decompiler.git
 pip install -r requirements.txt
 
 # 1) 解包 .ypf → ybn 目录（一次）
-python ypf_tool.py list    "D:\Games\...\pac\update1.ypf"
-python ypf_tool.py extract "D:\Games\...\pac\update1.ypf" D:\ysbin
+#    输入是**原版游戏自带**的 pac\bn.ypf；update1.ypf 是本工具链的**产物**，原版游戏里没有这个文件
+python ypf_tool.py list    "D:\Games\...\pac\bn.ypf"
+python ypf_tool.py extract "D:\Games\...\pac\bn.ypf" D:\ysbin
 
 # 2) 抽文本（一次；--key auto 会自动恢复 YSTB 的 4 字节异或密钥）
 python extract_yuris_text.py --indir D:\ysbin --outdir yuris_text_out
@@ -184,7 +185,7 @@ yuris-cn-kit\
 
 ## 9. 许可与合规
 
-* **游戏本体、资源、exe、脚本文本**版权属于原厂（例：CLOCKUP）。本仓库**不含**任何游戏数据，也**不含**任何译文；发布补丁时请只分发**补丁器 + 你自己生成的包**，不要分发 exe 或原始资源。
+* **游戏本体、资源、exe、脚本文本**版权属于原厂（例：CLOCKUP）。本仓库**不含**任何游戏数据，也**不含**任何译文；发布补丁时优先只分发**补丁器**（用户拿自己那份 `pac\bn.ypf` 生成包），不要分发 exe 或原始资源。连带分发你自己生成的 `update1.ypf` 属于灰色地带，见 [NOTICE.md](NOTICE.md) §4。
 * **`yuris_decompiler`** 是第三方 MIT 项目，本仓库不分发它，请自行 clone 并遵守其许可。
 * **Glow Sans**：仓库代码 MIT，字体本体 SIL OFL 1.1（`Copyright (c) 2020, Celestial Phineas`，**无 Reserved Font Name 声明**）。本仓库只分发**脚本**（`install_glow_sans.py`），不带字体文件；若你要把字体打进补丁，条件见 [NOTICE.md](NOTICE.md) §3。
 * 本仓库自带工具代码采用 **MIT**，见根目录 [`LICENSE`](LICENSE)（与上游 `yuris_decompiler` 同一许可）。发布时把那一个文件一起提交即可。

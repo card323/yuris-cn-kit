@@ -55,10 +55,11 @@ pip install -r requirements.txt
 ```powershell
 python ypf_tool.py list    "D:\Games\XXX\pac\bn.ypf"        # 看条目
 python ypf_tool.py extract "D:\Games\XXX\pac\bn.ypf" D:\ysbin   # 解包（outdir 是位置参数，不是 -o）
-python ypf_tool.py verify  "D:\Games\XXX\pac\bn.ypf"        # 校验每个条目的名/尺寸/哈希
+python ypf_tool.py verify  "D:\Games\XXX\pac\bn.ypf" --dir D:\ysbin   # 校验每个条目的名/尺寸/哈希（--dir 必填）
 ```
 
-* 游戏数据分在两个包里：`bn.ypf`（剧本/引擎脚本）和 `data.ypf`（图片、语音等）。**只需要脚本那个包**。
+* **输入是原版游戏自带的包**：本作是 `pac\bn.ypf`（2 705 819 字节 / 234 个条目）。`update1.ypf` 是本工具链**生成**的覆盖层，原版游戏里**没有**这个文件——不要拿它当输入。
+* 游戏数据分在 11 个包里，只有 `bn.ypf` 是**剧本/引擎脚本**（`cg.ypf` 2.2 GB、`sn.ypf` 101 MB、`vo.ypf` 455 MB、`vof.ypf` 304 MB，以及 `se/op/ed1/ed2/PV/cgsys.ypf` 都是图片/语音/BGM/影片，工具链一律不碰）。**只需要脚本那个包**；别的作品里它的名字可能不同，用 `list` 找哪个包里有 `ysc.ybn`。
 * 解包出来是 `ysc.ybn`（命令表）、`yst_list.ybn`（清单）、`ystNNNNN.ybn`（脚本）。把 `ysl.ybn` 也解出来如果存在（本作**没有**发它，见 [ENGINE_NOTES.md](ENGINE_NOTES.md) §4）。
 * `ypf_tool.py selftest` 是自检（造包→读回→比对），改过工具后跑一下。
 

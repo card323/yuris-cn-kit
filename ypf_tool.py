@@ -431,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='examples:\n'
                '  python ypf_tool.py list pac\\bn.ypf\n'
-               '  python ypf_tool.py verify pac\\bn.ypf D:\\ysbin\n'
+               '  python ypf_tool.py verify pac\\bn.ypf --dir D:\\ysbin\n'
                '  python ypf_tool.py make --from-dir D:\\patch --out update1.ypf\n'
                '  python ypf_tool.py repack --base pac\\bn.ypf --dir D:\\ysbin_cn '
                '--out bn_new.ypf')

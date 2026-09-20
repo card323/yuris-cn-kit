@@ -21,7 +21,7 @@ python make_translation_workpack.py --indir D:\ysbin --outdir workpack
 python check_glossary.py --lines workpack\lines.tsv
 
 # 4. 构建 + 校验 + 安装
-python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install
+python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install --install-dir "<游戏目录>"
 ```
 
 `lines.tsv` 的列：`id`（标识，别改）、`count`（出现次数）、`chars`（字数）、`orig_text`（日文原文，只读）、`new_text`（**你只填这一列**）。
@@ -256,7 +256,7 @@ python test_ruby_check.py
 python test_control_check.py
 
 # 4. 构建（内部会自动跑全部 8 项验收检查）
-python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install
+python build_cn_pack.py --workpack workpack --indir D:\ysbin --out build --install --install-dir "<游戏目录>"
 ```
 
 必须全部 `ok` / `PASS` 才算完成。构建日志里要确认这几行：
