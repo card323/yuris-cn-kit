@@ -36,6 +36,8 @@
 | 9 调参/审计 | `tune_dialogue.py`／`audit_char_syntax.py`／两个 `test_*.py` | 需要时 | 预览 PNG、审计报告 |
 
 > 3–6 是「翻译侧」循环，7–9 是「工程侧」循环。7 只需做一次；8 每改一句都要重跑（约 14–26 秒）。
+>
+> 第 5 步交给 **本地小模型批量翻译**（Ollama ＋ 大模型编排）时的完整做法见 **[AI_TRANSLATION.md](AI_TRANSLATION.md)**。
 
 ---
 
@@ -115,6 +117,7 @@ Get-ChildItem "$dst\*.txt" | Rename-Item -NewName { $_.BaseName + '_中文.txt' 
 * 文件名必须是 `<场景名>_中文.txt`（后缀 `_中文.txt` 是 `merge_translation.py` 的 `SUFFIX`）。
 * **第 N 行对应该场景第 N 行**，行数必须和抽取结果一致——merge 会核对行数，不一致就跳过整个场景并报错。
 * 行**留空 = 这一行保留日文**（构建时会把它按 GBK 重新编码，所以半成品包在游戏里依然是可读文本，不会乱码）。
+* 用**本地小模型批量填这些文件**的可行做法（提示词、显存纪律、校验与修复闭环）见 **[AI_TRANSLATION.md](AI_TRANSLATION.md)**；核心约定不变：模型只写 `_中文.txt`，不进 `lines.tsv`，且译文要过与人工译文同一份 linter。
 
 ### 2.5 合并与逐行检查
 
@@ -126,6 +129,7 @@ python check_glossary.py --lines workpack\lines.tsv --strict      # 警告也算
 ```
 
 * merge 只会写 `new_text` 列；同一 id 被两个场景译得不一样时报错并**取 scripts.tsv 里靠前的那个**。
+* merge **默认只扫 `translation\userscript` 这一层**。译文放在子目录（如 `translation\userscript\H\`）时必须显式传 `--translation-dir translation/userscript/H`，否则它**一个文件都找不到，却照样退出 0**——看着像成功，实际什么都没合并。
 * `fix_name_plates.py --apply` 可以在合并前批量修「说话人前缀」问题（详见 [TRANSLATION_RULES.md](TRANSLATION_RULES.md) §3），会留 `.bak`。
 * linter 检查项与消息见 §4。
 

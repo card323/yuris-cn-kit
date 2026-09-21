@@ -33,6 +33,7 @@ Full detail lives in [`docs/`](../../../docs/):
 | [ENCODING_AND_FONT.md](../../../docs/ENCODING_AND_FONT.md) | changing font, weight, size, spacing, or encoding |
 | [TROUBLESHOOTING.md](../../../docs/TROUBLESHOOTING.md) | the game crashes, looks wrong, or a check fails |
 | [ALTERNATIVES.md](../../../docs/ALTERNATIVES.md) | someone asks how other groups do YU-RIS, or whether an off-the-shelf tool would be quicker |
+| [AI_TRANSLATION.md](../../../docs/AI_TRANSLATION.md) | the translation is being produced by an LLM — cloud or a local Ollama model — in bulk |
 | [PACKAGING.md](../../../docs/PACKAGING.md) | assembling, smoke-testing or publishing the installer release (form A2) |
 | [NOTICE.md](../../../NOTICE.md) | before publishing anything |
 
@@ -100,7 +101,13 @@ Copy-Item 'yuris_text_out\text\data\script\userscript\*.txt' $dst
 Get-ChildItem "$dst\*.txt" | Rename-Item -NewName { $_.BaseName + '_中文.txt' }
 
 # 3. TRANSLATE, then merge
+#    Human, or an LLM: docs/AI_TRANSLATION.md covers the bulk/LLM route (prompt
+#    clauses, VRAM discipline, validator + repair loop). Either way the model
+#    only ever writes translation\userscript\*_中文.txt - never lines.tsv - and
+#    the output must pass the same linter as human text (step 4).
 python merge_translation.py --workpack workpack --translation-dir translation\userscript --apply
+#    Scenes in a SUBDIRECTORY need --translation-dir <that dir>; without it merge
+#    finds 0 files and still exits 0.
 
 # 4. GATE: TEXT LEVEL  (prefixes, ruby, forbidden glyphs, width, glossary)
 python check_glossary.py --lines workpack\lines.tsv
