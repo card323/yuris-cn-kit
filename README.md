@@ -60,6 +60,8 @@ oujunoshima.exe ──patch_yuris_charset──▶ lfCharSet=0x86(936) + 默认�
 ```
 
 > 中间那步「人工/AI 翻译」如果交给 **本地小模型批量做**（Ollama ＋ 大模型编排），可复用的做法、提示词条款、校验闭环和实测数据见 **[docs/AI_TRANSLATION.md](docs/AI_TRANSLATION.md)**。
+>
+> **为什么「内容生成」要留在本地模型上**：这类作品里有大量成人向场景，而主流云端模型的服务条款通常不允许它生成这一类文本。所以这套流程把边界画在**架构**上而不是提示词上——云端 agent 负责编排与工程（切分、术语表、提示词、确定性校验、分级修复、构建打包），**译文一律由本机的本地模型产出**，云端侧只编排、不产出译文。这不是绕开谁的限制，而是提前把"哪一侧产出什么"定死：云端做它被允许做的事，生成发生在你自己的机器和你自己的权重上。译文的处置仍受 [NOTICE.md](NOTICE.md) §5 约束（自购游戏、个人汉化、不发布译文）。细节与实测见 [docs/AI_TRANSLATION.md](docs/AI_TRANSLATION.md) §2、§4.3。
 
 ---
 
@@ -133,7 +135,7 @@ python make_patcher.py --zip --force --game "D:\Games\..."
 | [docs/PIPELINE.md](docs/PIPELINE.md) | **操作手册**：从解包到安装的每一步、参数、产物、校验门、工具一览 | 执行汉化的人 |
 | [docs/PACKAGING.md](docs/PACKAGING.md) | **打包与发布**：A1/A2 两种发布形态、`manifest.json` 逐字段、发行包自检配方、杀软误报、发布渠道 | 要发布补丁的人 |
 | [docs/TRANSLATION_RULES.md](docs/TRANSLATION_RULES.md) | **翻译硬约束**（模板）：前缀、ruby、禁写字符、宽度预算、自检命令 | 译者 |
-| [docs/AI_TRANSLATION.md](docs/AI_TRANSLATION.md) | **用 AI 做批量翻译**：大模型编排 ＋ 本地小模型的完整工作流（分工判据、显存纪律、提示词条款表、校验与分级修复闭环、度量筛检、失败模式、已跑通的骨架、实测数据） | 要批量翻的人、用本地模型的人 |
+| [docs/AI_TRANSLATION.md](docs/AI_TRANSLATION.md) | **用 AI 做批量翻译**：大模型编排 ＋ 本地小模型的完整工作流（云端/本地分工的判据与成因、显存纪律、提示词条款表、校验与分级修复闭环、度量筛检、失败模式、已跑通的骨架、实测数据） | 要批量翻的人、用本地模型的人 |
 | [docs/ENGINE_NOTES.md](docs/ENGINE_NOTES.md) | 引擎逆向笔记：YPF/YSTB/YSL/YSCM 格式、清单与行号、密钥恢复、exe 里 5 处 CP932 假设**以及怎么为别的构建重新定位** | 想移植/排错的人 |
 | [docs/ENCODING_AND_FONT.md](docs/ENCODING_AND_FONT.md) | 编码/字符集/字体三者的关系，为什么必须是 GBK，字体许可与降级链 | 想换字体/编码的人 |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | 真实踩过的坑：症状 → 原因 → 处置（含两次把游戏玩崩的现场） | 出问题的人 |
